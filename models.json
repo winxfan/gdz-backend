@@ -1,0 +1,490 @@
+[
+	{
+	  "id": "be88d8a3-cc11-41cf-84eb-cc96ed1654e4",
+	  "title": "Kling 2.5 Turbo Pro",
+	  "name": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+	  "description": "Top-tier image-to-video generation with unparalleled motion fluidity, cinematic visuals, and exceptional prompt precision.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "second",
+	  "cost_per_unit_tokens": "12.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/kling-banner.jpg",
+	  "hint": "Загрузите 1–3 изображения и опишите сцену для генерации видео с реалистичным движением.",
+	  "max_file_count": 1,
+	  "options": {
+		"options": [
+		  {
+			"name": "prompt",
+			"type": "text",
+			"title": "Описание сцены",
+			"is_required": true,
+			"default_value": "Четкая линия старта разделяет две мощные машины, двигатели которых взревели в предвкушении предстоящего испытания. Они устремляются вперед в пылу соревнования, сливаясь в одно целое со скоростью и хромом."
+		  },
+		  {
+			"name": "image_url",
+			"type": "upload_zone",
+			"title": "Изображения",
+			"is_required": true,
+			"default_value": [
+			  "https://v3.fal.media/files/panda/HnY2yf-BbzlrVQxR-qP6m_9912d0932988453aadf3912fc1901f52.jpg"
+			]
+		  },
+		  {
+			"name": "duration",
+			"type": "select",
+			"title": "Длительность",
+			"options": [
+			  5,
+			  10
+			],
+			"default_value": 5
+		  },
+		  {
+			"name": "negative_prompt",
+			"type": "text",
+			"title": "Negative Prompt",
+			"default_value": ""
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://storage.googleapis.com/falserverless/model_tests/kling/kling-v2.5-turbo-pro-image-to-video-output.mp4",
+			"meta": {
+			  "preview": "https://example.com/previews/veo3.jpg"
+			},
+			"name": "result",
+			"type": "video",
+			"title": "Пример результата"
+		  }
+		]
+	  },
+	  "created_at": "2025-10-29 22:46:18.599614+03",
+	  "format_from": "image",
+	  "format_to": "video"
+	},
+	{
+	  "id": "b05ac9ba-63e6-4110-b30f-0eafc337e50f",
+	  "title": "Gemini Image Generation",
+	  "name": "fal-ai/nano-banana",
+	  "description": "Generate high-quality images using Google Gemini AI model with flexible aspect ratios and output formats.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "image",
+	  "cost_per_unit_tokens": "5.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/gemini-banner.jpg",
+	  "hint": "Введите детальное описание изображения для генерации. Можно настроить количество изображений, формат вывода и соотношение сторон.",
+	  "max_file_count": 0,
+	  "options": {
+		"options": [
+		  {
+			"name": "prompt",
+			"type": "text",
+			"title": "Описание изображения",
+			"is_required": true,
+			"default_value": "An action shot of a black lab swimming in an inground suburban swimming pool. The camera is placed meticulously on the water line, dividing the image in half, revealing both the dogs head above water holding a tennis ball in it's mouth, and it's paws paddling underwater."
+		  },
+		  {
+			"name": "num_images",
+			"type": "select",
+			"title": "Количество изображений",
+			"options": [
+			  1,
+			  2,
+			  3,
+			  4
+			],
+			"default_value": 1
+		  },
+		  {
+			"name": "output_format",
+			"type": "select",
+			"title": "Формат вывода",
+			"options": [
+			  "jpeg",
+			  "png",
+			  "webp"
+			],
+			"default_value": "jpeg"
+		  },
+		  {
+			"name": "aspect_ratio",
+			"type": "select",
+			"title": "Соотношение сторон",
+			"options": [
+			  "21:9",
+			  "1:1",
+			  "4:3",
+			  "3:2",
+			  "2:3",
+			  "5:4",
+			  "4:5",
+			  "3:4",
+			  "16:9",
+			  "9:16"
+			],
+			"default_value": "1:1"
+		  },
+		  {
+			"name": "limit_generations",
+			"type": "checkbox",
+			"title": "Ограничить генерации",
+			"description": "Экспериментальная опция: ограничить количество генераций в каждом раунде до 1",
+			"default_value": false
+		  },
+		  {
+			"name": "sync_mode",
+			"type": "checkbox",
+			"title": "Синхронный режим",
+			"description": "Возвращать медиа как data URI (данные не будут доступны в истории запросов)",
+			"default_value": false
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://storage.googleapis.com/falserverless/example_outputs/nano-banana-t2i-output.png",
+			"meta": {
+			  "preview": "https://example.com/previews/gemini-generation.jpg"
+			},
+			"name": "result",
+			"type": "image",
+			"title": "Пример сгенерированного изображения"
+		  }
+		]
+	  },
+	  "created_at": "2025-11-08 00:21:03.655563+03",
+	  "format_from": "text",
+	  "format_to": "image"
+	},
+	{
+	  "id": "9ebc338c-3ed2-47fb-836a-42fcf71152ce",
+	  "title": "Gemini Image Editing",
+	  "name": "fal-ai/nano-banana/edit",
+	  "description": "Edit multiple images using Google Gemini AI model. Apply transformations and edits based on text prompts with flexible output options.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "image",
+	  "cost_per_unit_tokens": "7.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/gemini-edit-banner.jpg",
+	  "hint": "Загрузите одно или несколько изображений и опишите желаемые изменения. Модель применит редактирование ко всем загруженным изображениям.",
+	  "max_file_count": 5,
+	  "options": {
+		"options": [
+		  {
+			"name": "prompt",
+			"type": "text",
+			"title": "Описание изменений",
+			"is_required": true,
+			"default_value": "make a photo of the man driving the car down the california coastline"
+		  },
+		  {
+			"name": "image_urls",
+			"type": "upload_zone",
+			"title": "Изображения для редактирования",
+			"multiple": true,
+			"is_required": true,
+			"default_value": [
+			  "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input.png",
+			  "https://storage.googleapis.com/falserverless/example_inputs/nano-banana-edit-input-2.png"
+			]
+		  },
+		  {
+			"name": "num_images",
+			"type": "select",
+			"title": "Количество изображений на выходе",
+			"options": [
+			  1,
+			  2,
+			  3,
+			  4
+			],
+			"default_value": 1
+		  },
+		  {
+			"name": "output_format",
+			"type": "select",
+			"title": "Формат вывода",
+			"options": [
+			  "jpeg",
+			  "png",
+			  "webp"
+			],
+			"default_value": "jpeg"
+		  },
+		  {
+			"name": "aspect_ratio",
+			"type": "select",
+			"title": "Соотношение сторон",
+			"options": [
+			  "21:9",
+			  "1:1",
+			  "4:3",
+			  "3:2",
+			  "2:3",
+			  "5:4",
+			  "4:5",
+			  "3:4",
+			  "16:9",
+			  "9:16"
+			],
+			"description": "По умолчанию используется соотношение сторон исходного изображения",
+			"default_value": null
+		  },
+		  {
+			"name": "limit_generations",
+			"type": "checkbox",
+			"title": "Ограничить генерации",
+			"description": "Экспериментальная опция: ограничить количество генераций в каждом раунде до 1",
+			"default_value": false
+		  },
+		  {
+			"name": "sync_mode",
+			"type": "checkbox",
+			"title": "Синхронный режим",
+			"description": "Возвращать медиа как data URI (данные не будут доступны в истории запросов)",
+			"default_value": false
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://storage.googleapis.com/falserverless/example_outputs/nano-banana-multi-edit-output.png",
+			"meta": {
+			  "preview": "https://example.com/previews/gemini-edit.jpg",
+			  "description": "Here is a photo of the man driving the car down the California coastline."
+			},
+			"name": "result",
+			"type": "image",
+			"title": "Пример отредактированного изображения"
+		  }
+		]
+	  },
+	  "created_at": "2025-11-08 00:29:51.261198+03",
+	  "format_from": "image",
+	  "format_to": "image"
+	},
+	{
+	  "id": "c82f7b9a-1e3f-4a5d-b3c2-8e9f6d1a4b7c",
+	  "title": "Photo Restoration",
+	  "name": "fal-ai/image-apps-v2/photo-restoration",
+	  "description": "AI-powered photo restoration that enhances old or damaged photos by improving resolution, fixing colors, and removing scratches.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "image",
+	  "cost_per_unit_tokens": "10.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/photo-restoration-banner.jpg",
+	  "hint": "Загрузите старое или поврежденное фото для восстановления. Модель улучшит разрешение, исправит цвета и уберет царапины.",
+	  "max_file_count": 1,
+	  "options": {
+		"options": [
+		  {
+			"name": "image_url",
+			"type": "upload_zone",
+			"title": "Фотография для восстановления",
+			"is_required": true,
+			"default_value": [
+			  "https://v3.fal.media/files/panda/BcOIyOJ5Z1-GOjDi_GmsX_50e353c588c74435882f8f68989b4af5.png"
+			]
+		  },
+		  {
+			"name": "enhance_resolution",
+			"type": "checkbox",
+			"title": "Улучшить разрешение",
+			"default_value": true
+		  },
+		  {
+			"name": "fix_colors",
+			"type": "checkbox",
+			"title": "Исправить цвета",
+			"default_value": true
+		  },
+		  {
+			"name": "remove_scratches",
+			"type": "checkbox",
+			"title": "Убрать царапины",
+			"default_value": true
+		  },
+		  {
+			"name": "aspect_ratio",
+			"type": "select",
+			"title": "Соотношение сторон",
+			"options": [
+			  "1:1",
+			  "16:9",
+			  "9:16",
+			  "4:3",
+			  "3:4"
+			],
+			"default_value": "4:3"
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://v3b.fal.media/files/b/zebra/grrkysWir2bvFTnubydQK_92e56e5831994be59e653611983d503f.png",
+			"meta": {
+			  "preview": "https://example.com/previews/photo-restoration.jpg"
+			},
+			"name": "result",
+			"type": "image",
+			"title": "Пример восстановленного фото"
+		  }
+		]
+	  },
+	  "created_at": "2025-11-01 19:38:12.308153+03",
+	  "format_from": "image",
+	  "format_to": "image"
+	},
+	{
+	  "id": "3f06abda-8608-4fec-bd20-c62eb3c4a232",
+	  "title": "Sora 2 Text to Video",
+	  "name": "fal-ai/sora-2/text-to-video",
+	  "description": "Generate high-quality videos from text prompts using OpenAI's Sora 2 model with cinematic quality and realistic motion.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "second",
+	  "cost_per_unit_tokens": "12.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/sora2-banner.jpg",
+	  "hint": "Опишите детальную сцену для генерации видео. Укажите разрешение, соотношение сторон и длительность ролика.",
+	  "max_file_count": 0,
+	  "options": {
+		"options": [
+		  {
+			"name": "prompt",
+			"type": "text",
+			"title": "Описание видео",
+			"is_required": true,
+			"default_value": "A dramatic Hollywood breakup scene at dusk on a quiet suburban street. A man and a woman in their 30s face each other, speaking softly but emotionally, lips syncing to breakup dialogue. Cinematic lighting, warm sunset tones, shallow depth of field, gentle breeze moving autumn leaves, realistic natural sound, no background music"
+		  },
+		  {
+			"name": "resolution",
+			"type": "select",
+			"title": "Разрешение видео",
+			"options": [
+			  "720p"
+			],
+			"default_value": "720p"
+		  },
+		  {
+			"name": "aspect_ratio",
+			"type": "select",
+			"title": "Соотношение сторон",
+			"options": [
+			  "16:9",
+			  "9:16"
+			],
+			"default_value": "16:9"
+		  },
+		  {
+			"name": "duration",
+			"type": "select",
+			"title": "Длительность (секунды)",
+			"options": [
+			  4,
+			  8,
+			  12
+			],
+			"default_value": 4
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://storage.googleapis.com/falserverless/example_outputs/sora_t2v_output.mp4",
+			"meta": {
+			  "preview": "https://example.com/previews/sora2-video.jpg",
+			  "duration": 4,
+			  "video_id": "video_123",
+			  "resolution": "720p"
+			},
+			"name": "result",
+			"type": "video",
+			"title": "Пример сгенерированного видео"
+		  }
+		]
+	  },
+	  "created_at": "2025-11-08 00:43:38.982243+03",
+	  "format_from": "text",
+	  "format_to": "video"
+	},
+	{
+	  "id": "c5fd0fc5-07b3-4847-a14b-56364ca85b6b",
+	  "title": "Sora 2 Image to Video",
+	  "name": "fal-ai/sora-2/image-to-video",
+	  "description": "Generate videos from images and text prompts using OpenAI's Sora 2 model. Transform static images into dynamic video scenes with realistic motion.",
+	  "category_id": "8b7d5e09-18df-428a-b478-5f59473fa9ec",
+	  "cost_unit": "second",
+	  "cost_per_unit_tokens": "15.0000",
+	  "currency": "RUB",
+	  "banner_image_url": "https://example.com/assets/sora2-i2v-banner.jpg",
+	  "hint": "Загрузите изображение и опишите динамику сцены. Модель создаст видео на основе вашего изображения с реалистичным движением.",
+	  "max_file_count": 1,
+	  "options": {
+		"options": [
+		  {
+			"name": "prompt",
+			"type": "text",
+			"title": "Описание движения и сцены",
+			"is_required": true,
+			"default_value": "Front-facing 'invisible' action-cam on a skydiver in freefall above bright clouds; camera locked on his face. He speaks over the wind with clear lipsync: 'This is insanely fun! You've got to try it—book a tandem and go!' Natural wind roar, voice close-mic'd and slightly compressed so it's intelligible. Midday sun, goggles and jumpsuit flutter, altimeter visible, parachute rig on shoulders. Energetic but stable framing with subtle shake; brief horizon roll. End on first tug of canopy and wind noise dropping."
+		  },
+		  {
+			"name": "image_url",
+			"type": "upload_zone",
+			"title": "Исходное изображение",
+			"is_required": true,
+			"default_value": [
+			  "https://storage.googleapis.com/falserverless/example_inputs/sora-2-i2v-input.png"
+			]
+		  },
+		  {
+			"name": "resolution",
+			"type": "select",
+			"title": "Разрешение видео",
+			"options": [
+			  "auto",
+			  "720p"
+			],
+			"description": "Авто - использует разрешение исходного изображения",
+			"default_value": "auto"
+		  },
+		  {
+			"name": "aspect_ratio",
+			"type": "select",
+			"title": "Соотношение сторон",
+			"options": [
+			  "auto",
+			  "16:9",
+			  "9:16"
+			],
+			"description": "Авто - сохраняет соотношение сторон исходного изображения",
+			"default_value": "auto"
+		  },
+		  {
+			"name": "duration",
+			"type": "select",
+			"title": "Длительность (секунды)",
+			"options": [
+			  4,
+			  8,
+			  12
+			],
+			"default_value": 4
+		  }
+		],
+		"demo_output": [
+		  {
+			"url": "https://storage.googleapis.com/falserverless/example_outputs/sora_2_i2v_output.mp4",
+			"meta": {
+			  "preview": "https://example.com/previews/sora2-i2v-video.jpg",
+			  "duration": 4,
+			  "video_id": "video_123",
+			  "resolution": "auto"
+			},
+			"name": "result",
+			"type": "video",
+			"title": "Пример видео из изображения"
+		  }
+		]
+	  },
+	  "created_at": "2025-11-08 00:44:55.29152+03",
+	  "format_from": "image",
+	  "format_to": "video"
+	}
+  ]

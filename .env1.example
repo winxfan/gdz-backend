@@ -1,0 +1,37 @@
+FAL_KEY=98
+
+FAL_ENDPOINT=fal-ai/kling-video/v2.5-turbo/pro/image-to-video
+PORT=8000
+
+# S3 Configuration
+S3_ENDPOINT_URL=https://storage.yandexcloud.net
+S3_ACCESS_KEY_ID=123
+S3_SECRET_ACCESS_KEY=123
+S3_BUCKET_NAME=livephoto
+S3_REGION_NAME=ru-central1
+
+YOOKASSA_SHOP_ID=132
+YOOKASSA_API_KEY=l123
+
+# SMTP Configuration
+SMTP_SERVER=smtp.yandex.ru
+SMTP_PORT=465
+SMTP_USERNAME=visualsearch@yandex.com
+SMTP_PASSWORD=123
+
+FRONTEND_RETURN_URL_BASE=https://xn--b1ahgb0aea5aq.online
+BACKEND_PUBLIC_BASE_URL=https://xn--80aqu.xn--b1ahgb0aea5aq.online
+FAL_WEBHOOK_SECRET=labibu
+
+# OAuth providers
+OAUTH_GOOGLE_CLIENT_ID=your-google-client-id
+OAUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
+OAUTH_VK_CLIENT_ID=your-vk-client-id
+OAUTH_VK_CLIENT_SECRET=your-vk-client-secret
+OAUTH_YANDEX_CLIENT_ID=b22fc3118a2a464f973993c6be568eb2
+OAUTH_YANDEX_CLIENT_SECRET=4cb9f34e33c442409476b444e6d578cb
+
+# JWT/session
+JWT_SECRET_KEY=change-this-in-prod
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
