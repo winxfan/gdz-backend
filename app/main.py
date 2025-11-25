@@ -57,9 +57,10 @@ app.add_middleware(
 
 api_v1 = APIRouter(prefix="/api/v1")
 api_v1.include_router(auth.router)
-api_v1.include_router(jobs.router, dependencies=[Depends(require_api_key)])
+api_v1.include_router(jobs.router)
 api_v1.include_router(transactions.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(users.router, dependencies=[Depends(require_api_key)])
+api_v1.include_router(users.public_router)
 api_v1.include_router(data.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(payments.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(tariffs.router, dependencies=[Depends(require_api_key)])

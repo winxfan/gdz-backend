@@ -39,6 +39,7 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = (
         Index('ix_users_email', 'email'),
+        Index('ix_users_ip', 'ip'),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=default_uuid)
@@ -47,10 +48,13 @@ class User(Base):
     avatar_id = Column(Integer)
     anon_user_id = Column(Text, unique=True)
     email = Column(Text, unique=True)
+    social_id = Column(Text, unique=True)
     avatar_url = Column(Text)
     is_accepted_promo = Column(Boolean, default=False)
 
-    balance_tokens = Column(Numeric(14, 4), default=0)
+    balance_tokens = Column(Numeric(14, 4), default=5)
+    tokens_used_as_anon = Column(Integer, default=0)
+    is_authorized = Column(Boolean, default=False)
 
     consent_pd = Column(Boolean, default=False)
     is_joined_in_channel = Column(Boolean, default=False)
@@ -100,9 +104,14 @@ class Job(Base):
     # Источники и идентификаторы
     anon_user_id = Column(Text)
     order_id = Column(Text, unique=True)
+    input_s3_url = Column(Text)
+    input_mime_type = Column(Text)
 
     # Основная логика
     status = Column(JobStatusEnum, default='waiting_payment', nullable=False)
+    ocr_operation_id = Column(Text)
+    ocr_status = Column(Text)
+    gpt_response_id = Column(Text)
 
     # Экономика
     tokens_reserved = Column(Numeric(14, 4), default=0)
@@ -111,9 +120,11 @@ class Job(Base):
     # Контент
     detected_text = Column(Text)
     generated_text = Column(Text)
+    error_message = Column(Text)
 
     # Вспомогательные данные
     payment_info = Column(JSONB)
+    pipeline_meta = Column(JSONB)
     is_ok = Column(Boolean, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

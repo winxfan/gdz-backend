@@ -57,6 +57,14 @@ class Settings(BaseSettings):
     frontend_return_url_base: str | None = Field(default=None, alias="FRONTEND_RETURN_URL_BASE")
     backend_public_base_url: str | None = Field(default=None, alias="BACKEND_PUBLIC_BASE_URL")
 
+    # Yandex Cloud
+    yandex_cloud_folder_id: str | None = Field(default=None, alias="YANDEX_CLOUD_FOLDER_ID")
+    yandex_ocr_api_key: str | None = Field(default=None, alias="YANDEX_OCR_API_KEY")
+    yandex_gpt_api_key: str | None = Field(default=None, alias="YANDEX_GPT_API_KEY")
+    yandex_gpt_project_id: str | None = Field(default=None, alias="YANDEX_GPT_PROJECT_ID")
+    yandex_gpt_prompt_id: str | None = Field(default=None, alias="YANDEX_GPT_PROMPT_ID")
+    yandex_gpt_base_url: str = Field(default="https://rest-assistant.api.cloud.yandex.net/v1", alias="YANDEX_GPT_BASE_URL")
+
     # FAL.AI
     fal_key: str | None = Field(default=None, alias="FAL_KEY")
     fal_endpoint: str | None = Field(

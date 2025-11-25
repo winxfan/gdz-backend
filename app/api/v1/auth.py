@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import RedirectResponse
@@ -12,7 +13,8 @@ from app.core.config import settings
 from app.services.oauth import oauth_service
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.db.models import User
+from app.db.models import User, Job, Transaction
+from app.services.user_profile import avatar_id_for_ip, username_for_ip
 
 router = APIRouter(prefix="/auth", tags=["auth"]) 
 router_public = APIRouter(tags=["auth"])  # публичные колбэки без /api/v1
@@ -24,7 +26,94 @@ def _validate_provider(provider: str) -> None:
         raise HTTPException(status_code=404, detail="Unknown provider")
 
 
-async def _handle_oauth_callback(request: Request, provider: str) -> RedirectResponse:
+def _extract_identity(provider: str, token: dict[str, Any], userinfo: dict[str, Any] | None) -> dict[str, Any]:
+    social_id = None
+    email = None
+    name = None
+
+    if provider == "google" and userinfo:
+        social_id = userinfo.get("sub")
+        email = userinfo.get("email")
+        name = userinfo.get("name")
+    elif provider == "yandex" and userinfo:
+        social_id = userinfo.get("id")
+        email = userinfo.get("default_email") or userinfo.get("emails", [None])[0]
+        name = userinfo.get("real_name") or userinfo.get("display_name")
+    elif provider == "vk":
+        social_id = token.get("user_id")
+        email = token.get("email")
+        name = None
+
+    if social_id:
+        social_id = f"{provider}:{social_id}"
+
+    return {"social_id": social_id, "email": email, "name": name}
+
+
+def _merge_users(db: Session, target: User, source: User) -> None:
+    target.balance_tokens = (target.balance_tokens or Decimal("0")) + (source.balance_tokens or Decimal("0"))
+    target.tokens_used_as_anon = max(target.tokens_used_as_anon or 0, source.tokens_used_as_anon or 0)
+    if source.username:
+        target.username = source.username
+    if source.avatar_id:
+        target.avatar_id = source.avatar_id
+    if source.ip:
+        target.ip = source.ip
+    db.query(Job).filter(Job.user_id == source.id).update({Job.user_id: target.id})
+    db.query(Transaction).filter(Transaction.user_id == source.id).update({Transaction.user_id: target.id})
+    db.delete(source)
+
+
+def _link_user(
+    db: Session,
+    identity: dict[str, Any],
+    ip_hint: str | None,
+) -> User:
+    social_id = identity.get("social_id")
+    email = identity.get("email")
+
+    user: User | None = None
+    if social_id:
+        user = db.query(User).filter(User.social_id == social_id).first()
+    if not user and email:
+        user = db.query(User).filter(User.email == email).first()
+
+    anon_user: User | None = None
+    if ip_hint:
+        anon_user = db.query(User).filter(User.ip == ip_hint).first()
+
+    if user and anon_user and user.id != anon_user.id:
+        _merge_users(db, user, anon_user)
+        db.commit()
+        db.refresh(user)
+
+    target = user or anon_user
+    if not target:
+        username_seed = ip_hint or email or social_id or str(uuid.uuid4())
+        target = User(
+            ip=ip_hint,
+            username=username_for_ip(username_seed),
+            avatar_id=avatar_id_for_ip(username_seed),
+            anon_user_id=str(uuid.uuid4()),
+            balance_tokens=Decimal("5"),
+            tokens_used_as_anon=0,
+        )
+        db.add(target)
+
+    if social_id:
+        target.social_id = social_id
+    if email:
+        target.email = email
+    target.is_authorized = True
+    if ip_hint:
+        target.ip = ip_hint
+
+    db.commit()
+    db.refresh(target)
+    return target
+
+
+async def _handle_oauth_callback(request: Request, provider: str, db: Session) -> RedirectResponse:
     oauth = oauth_service.get_oauth()
     _validate_provider(provider)
     client = getattr(oauth, provider)
@@ -61,31 +150,25 @@ async def _handle_oauth_callback(request: Request, provider: str) -> RedirectRes
             "access_token": token.get("access_token"),
         }
 
+    identity = _extract_identity(provider, token, userinfo)
+    ip_hint = request.headers.get("x-user-ip") or request.cookies.get("user_ip")
+    try:
+        user = _link_user(db, identity, ip_hint)
+        logger.info("oauth_user_linked", provider=provider, user_id=str(user.id))
+    except Exception as exc:
+        logger.exception("oauth_user_link_failed", provider=provider)
+        frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
+        return RedirectResponse(url=f"{frontend_base}/profile?auth_error=link_failed&provider={provider}")
+
     frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
-    redirect_url = f"{frontend_base}/profile"
+    redirect_url = f"{frontend_base}/profile?userId={user.id}"
     return RedirectResponse(url=redirect_url)
 
 
 @router.get("/oauth/{provider}/login")
-async def oauth_login(request: Request, provider: str, db: Session = Depends(get_db)):
+async def oauth_login(request: Request, provider: str):
     oauth = oauth_service.get_oauth()
     _validate_provider(provider)
-
-    # Создаём пользователя, если его ещё нет
-    session = request.session
-    anon_user_id: str | None = session.get("anon_user_id")
-    if not anon_user_id:
-        anon_user_id = str(uuid.uuid4())
-        session["anon_user_id"] = anon_user_id
-
-    try:
-        existing = db.query(User).filter(User.anon_user_id == anon_user_id).first()
-        if existing is None:
-            user = User(anon_user_id=anon_user_id)
-            db.add(user)
-            db.commit()
-    except Exception as exc:  # не блокируем OAuth редирект при проблемах с БД
-        logger.warning("oauth_login_user_init_failed", error=str(exc))
 
     # Для Яндекса используем публичный колбэк без /api/v1
     if provider == "yandex":
@@ -97,14 +180,14 @@ async def oauth_login(request: Request, provider: str, db: Session = Depends(get
 
 
 @router.get("/oauth/{provider}/callback")
-async def oauth_callback(request: Request, provider: str):
-    return await _handle_oauth_callback(request, provider)
+async def oauth_callback(request: Request, provider: str, db: Session = Depends(get_db)):
+    return await _handle_oauth_callback(request, provider, db)
 
 
 # Публичный колбэк без префикса /api/v1, чтобы совпадал с настройками у Яндекса
 @router_public.get("/oauth/{provider}/callback")
-async def oauth_callback_public(request: Request, provider: str):
-    return await _handle_oauth_callback(request, provider)
+async def oauth_callback_public(request: Request, provider: str, db: Session = Depends(get_db)):
+    return await _handle_oauth_callback(request, provider, db)
 
 
 @router.get("/user/me")
