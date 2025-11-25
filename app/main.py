@@ -60,7 +60,6 @@ api_v1.include_router(auth.router)
 api_v1.include_router(jobs.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(transactions.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(users.router, dependencies=[Depends(require_api_key)])
-api_v1.include_router(users.legacy_router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(data.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(payments.router, dependencies=[Depends(require_api_key)])
 api_v1.include_router(tariffs.router, dependencies=[Depends(require_api_key)])
@@ -75,24 +74,3 @@ app.include_router(auth.router_public)
 @app.get("/health")
 def healthcheck() -> dict:
     return {"status": "ok", "env": settings.environment}
-
-
-# Фоновый поллинг очередь FAL (резервный контур на случай, если вебхук не пришёл)
-import threading
-from app.services.fal_poller import run_poller
-
-
-@app.on_event("startup")
-def start_fal_poller() -> None:
-    import logging
-    logging.getLogger("uvicorn.error").info(
-        "startup: starting fal poller thread (interval=%ss)",
-        settings.fal_poll_interval_seconds,
-    )
-    t = threading.Thread(
-        target=run_poller,
-        name="fal-poller",
-        args=(int(settings.fal_poll_interval_seconds),),
-        daemon=True,
-    )
-    t.start()
