@@ -81,7 +81,7 @@ Callback от VK/Google/Yandex.
 
 ### Backend выполняет:
 
-1. Получает данные OAuth (email, socialId)
+1. Получает данные OAuth (email, socialId, is_accepted_promo (согласие на рекламную рассылку))
 2. Ищет существующего авторизованного пользователя:
 
    * по socialId
@@ -111,7 +111,7 @@ Callback от VK/Google/Yandex.
 
 ---
 
-## 2.3 `POST /use-token`
+## 2.3 `POST /job`
 
 Запрос на использование токена.
 
@@ -270,15 +270,3 @@ Backend читает:
   "isAuthorized": false
 }
 ```
-
----
-
-Если хочешь — могу подготовить:
-
-✅ ТЗ для фронтенда
-✅ ТЗ для базы данных (PostgreSQL/Mongo)
-✅ Готовый backend на Express или Nest.js
-✔ Полностью рабочую реализацию детерминированной генерации
-✔ Пример axios middleware + jotai store
-
-С чего продолжим?

@@ -86,11 +86,7 @@ class Transaction(Base):
 class Job(Base):
     __tablename__ = "jobs"
     __table_args__ = (
-        Index('ix_jobs_user_status_created', 'user_id', 'status', 'created_at'),
-        Index('ix_jobs_model_created', 'model_id', 'created_at'),
         Index('ix_jobs_request_id', 'request_id'),
-        Index('ix_jobs_output_gin', 'output', postgresql_using='gin'),
-        CheckConstraint('price_rub IS NULL OR price_rub >= 0', name='ck_jobs_price_nonneg'),
         CheckConstraint('tokens_reserved >= 0', name='ck_jobs_tokens_reserved_nonneg'),
         CheckConstraint('tokens_consumed >= 0', name='ck_jobs_tokens_consumed_nonneg'),
         CheckConstraint('tokens_consumed <= tokens_reserved', name='ck_jobs_tokens_consumed_lte_reserved'),
@@ -111,11 +107,10 @@ class Job(Base):
     # Экономика
     tokens_reserved = Column(Numeric(14, 4), default=0)
     tokens_consumed = Column(Numeric(14, 4), default=0)
-    cost_unit = Column(Text)
-    cost_per_unit_tokens = Column(Numeric(14, 4))
 
     # Контент
-    output = Column(Text)
+    detected_text = Column(Text)
+    generated_text = Column(Text)
 
     # Вспомогательные данные
     payment_info = Column(JSONB)
