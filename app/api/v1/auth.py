@@ -30,24 +30,28 @@ def _extract_identity(provider: str, token: dict[str, Any], userinfo: dict[str, 
     social_id = None
     email = None
     name = None
+    first_name = None
 
     if provider == "google" and userinfo:
         social_id = userinfo.get("sub")
         email = userinfo.get("email")
         name = userinfo.get("name")
+        first_name = userinfo.get("given_name") or (name.split(" ", 1)[0] if isinstance(name, str) else None)
     elif provider == "yandex" and userinfo:
         social_id = userinfo.get("id")
         email = userinfo.get("default_email") or userinfo.get("emails", [None])[0]
         name = userinfo.get("real_name") or userinfo.get("display_name")
+        first_name = userinfo.get("first_name") or (name.split(" ", 1)[0] if isinstance(name, str) else None)
     elif provider == "vk":
         social_id = token.get("user_id")
         email = token.get("email")
-        name = None
+        name = token.get("first_name")
+        first_name = token.get("first_name")
 
     if social_id:
         social_id = f"{provider}:{social_id}"
 
-    return {"social_id": social_id, "email": email, "name": name}
+    return {"social_id": social_id, "email": email, "name": name, "first_name": first_name}
 
 
 def _merge_users(db: Session, target: User, source: User) -> None:
@@ -88,11 +92,14 @@ def _link_user(
         db.refresh(user)
 
     target = user or anon_user
+    display_name = identity.get("first_name") or identity.get("name")
+
     if not target:
+        username_seed = display_name or ip_hint or email or social_id or str(uuid.uuid4())
         username_seed = ip_hint or email or social_id or str(uuid.uuid4())
         target = User(
             ip=ip_hint,
-            username=username_for_ip(username_seed),
+            username=display_name or username_for_ip(username_seed),
             avatar_id=avatar_id_for_ip(username_seed),
             anon_user_id=str(uuid.uuid4()),
             balance_tokens=Decimal("5"),
@@ -104,6 +111,8 @@ def _link_user(
         target.social_id = social_id
     if email:
         target.email = email
+    if display_name:
+        target.username = display_name
     target.is_authorized = True
     if ip_hint:
         target.ip = ip_hint
