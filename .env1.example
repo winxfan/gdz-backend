@@ -1,7 +1,7 @@
 FAL_KEY=98
 
 FAL_ENDPOINT=fal-ai/kling-video/v2.5-turbo/pro/image-to-video
-PORT=8000
+PORT=8002
 
 # S3 Configuration
 S3_ENDPOINT_URL=https://storage.yandexcloud.net

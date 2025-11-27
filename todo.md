@@ -47,7 +47,7 @@
 
 ## 8. Запуск
 - Установить зависимости `pip install -r requirements.txt` (включая `openai`).
-- Выполнить `uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+- Выполнить `uvicorn app.main:app --host 0.0.0.0 --port 8002`.
 - Проверить `GET /health`.
 
 ## 9. Проверка пайплайна

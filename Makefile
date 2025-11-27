@@ -4,7 +4,7 @@ PIP=pip3
 .PHONY: dev up down migrate revision seed
 
 dev:
-	uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 
 up:
 	docker compose -f backend/docker-compose.yml up -d --build

@@ -35,7 +35,7 @@ SMTP_CONFIG = {
 # Настройки приложения
 APP_CONFIG = {
     'frontend_url': os.getenv('FRONTEND_URL', 'https://xn--b1ahgb0aea5aq.online'),
-    'api_url': os.getenv('API_URL', 'http://localhost:8000'),
+    'api_url': os.getenv('API_URL', 'http://localhost:8002'),
 }
 
 # Публичные URL-ы приложения (из .env)
@@ -111,7 +111,7 @@ ENCRYPTION_CONFIG = {
 
 # Настройки Triton Inference Server
 TRITON_CONFIG = {
-    'url': os.getenv('TRITON_URL', 'http://localhost:8000'),
+    'url': os.getenv('TRITON_URL', 'http://localhost:8002'),
     'model_name': os.getenv('TRITON_MODEL_NAME', 'yolov8'),
     'model_version': os.getenv('TRITON_MODEL_VERSION', '1'),
     'timeout_seconds': int(os.getenv('TRITON_TIMEOUT_SECONDS', '30')),
@@ -125,7 +125,7 @@ TRITON_CONFIG = {
 
 # Настройки Triton для CLIP (эмбеддинги)
 TRITON_CLIP_CONFIG = {
-    'url': os.getenv('TRITON_URL', 'http://localhost:8000'),
+    'url': os.getenv('TRITON_URL', 'http://localhost:8002'),
     'model_name': os.getenv('TRITON_CLIP_MODEL_NAME', 'clip-vit-b32'),
     'model_version': os.getenv('TRITON_CLIP_MODEL_VERSION', '1'),
     'timeout_seconds': int(os.getenv('TRITON_TIMEOUT_SECONDS', '30')),
