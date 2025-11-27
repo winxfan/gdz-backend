@@ -9,18 +9,11 @@ client = OpenAI(
     project="b1g957vlfr8c7rme0vie",
 )
 
-stream = client.responses.create(
+response = client.responses.create(
     prompt={"id": "fvt83nnd92j82fhqmrvh"},
     input="сюда передаем текст который прочитали с изображения",
-    stream=True,
 )
 
-for event in stream:
-    if event.type == "response.output_text.delta":
-        print(event.delta, end="", flush=True)
-    elif event.type == "response.error":
-        raise RuntimeError(event.error)
-
-final_response = stream.get_final_response()
-print(f"\nresponse_id={final_response.id} usage={final_response.usage}")
+print(response.output_text.strip())
+print(f"response_id={response.id} usage={response.usage}")
 ```

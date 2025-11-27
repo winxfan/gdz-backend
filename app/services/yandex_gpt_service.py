@@ -35,34 +35,26 @@ class YandexGPTService:
         if not input_text.strip():
             raise ValueError("Empty input text for Yandex GPT")
         logger.info("yandex_gpt.generate: text_len=%s", len(input_text))
-        chunks: list[str] = []
-        stream = self.client.responses.create(
+        response = self.client.responses.create(
             prompt={"id": self.prompt_id},
             input=input_text,
-            stream=True,
         )
-        for event in stream:
-            if event.type == "response.output_text.delta":
-                chunks.append(event.delta)
-            elif event.type == "response.error":
-                raise RuntimeError(f"Yandex GPT error: {event.error}")
-        final_response = stream.get_final_response()
 
-        text = "".join(chunks).strip()
-        usage = getattr(final_response, "usage", None)
-        response_id = getattr(final_response, "id", None)
+        text = (getattr(response, "output_text", "") or "").strip()
+        usage = getattr(response, "usage", None)
+        response_id = getattr(response, "id", None)
         logger.info(
             "yandex_gpt.generate: response_id=%s generated_len=%s usage=%s meta=%s",
             response_id,
             len(text or ""),
             usage,
-            json.dumps(getattr(final_response, "model_dump", lambda: {})(), ensure_ascii=False)
-            if hasattr(final_response, "model_dump")
-            else str(final_response),
+            json.dumps(getattr(response, "model_dump", lambda: {})(), ensure_ascii=False)
+            if hasattr(response, "model_dump")
+            else str(response),
         )
         meta = {
             "responseId": response_id,
-            "usage": usage,
+            "usage": usage.model_dump() if hasattr(usage, "model_dump") else usage,
         }
         return text, meta
 
