@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     oauth_google_client_secret: str | None = Field(default=None, alias="OAUTH_GOOGLE_CLIENT_SECRET")
     oauth_vk_client_id: str | None = Field(default=None, alias="OAUTH_VK_CLIENT_ID")
     oauth_vk_client_secret: str | None = Field(default=None, alias="OAUTH_VK_CLIENT_SECRET")
+    oauth_vk_client_service_key: str | None = Field(default=None, alias="OAUTH_VK_CLIENT_SERVICE_KEY")
 
     # JWT
     jwt_secret_key: str = Field(default="dev-secret", alias="JWT_SECRET_KEY")

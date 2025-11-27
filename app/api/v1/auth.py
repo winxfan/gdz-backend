@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import RedirectResponse
 from authlib.integrations.base_client.errors import OAuthError
 import structlog
+from pydantic import BaseModel, Field
 
 from app.core.config import settings
 from app.services.oauth import oauth_service
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.db.models import User, Job, Transaction
 from app.services.user_profile import avatar_id_for_ip, username_for_ip
+from app.services.vk_id import get_vk_id_service, VkIdError
 
 router = APIRouter(prefix="/auth", tags=["auth"]) 
 router_public = APIRouter(tags=["auth"])  # публичные колбэки без /api/v1
@@ -96,7 +98,6 @@ def _link_user(
 
     if not target:
         username_seed = display_name or ip_hint or email or social_id or str(uuid.uuid4())
-        username_seed = ip_hint or email or social_id or str(uuid.uuid4())
         target = User(
             ip=ip_hint,
             username=display_name or username_for_ip(username_seed),
@@ -120,6 +121,49 @@ def _link_user(
     db.commit()
     db.refresh(target)
     return target
+
+
+def _serialize_public_user(user: User) -> dict[str, Any]:
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "avatarId": user.avatar_id,
+        "avatarUrl": user.avatar_url,
+        "tokens": float(user.balance_tokens or 0),
+        "tokensUsedAsAnon": user.tokens_used_as_anon or 0,
+        "isAuthorized": bool(user.is_authorized),
+        "createdAt": user.created_at.isoformat() if user.created_at else None,
+        "updatedAt": user.updated_at.isoformat() if user.updated_at else None,
+    }
+
+
+class VkIdExchangePayload(BaseModel):
+    code: str
+    device_id: str = Field(..., alias="deviceId")
+    code_verifier: str = Field(..., alias="codeVerifier")
+    state: str | None = None
+
+
+@router.post("/oauth/vk-id/exchange")
+def vk_id_exchange(
+    payload: VkIdExchangePayload,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    service = get_vk_id_service()
+    try:
+        token_payload = service.exchange_code(
+            code=payload.code,
+            device_id=payload.device_id,
+            code_verifier=payload.code_verifier,
+        )
+        identity = service.build_identity(token_payload)
+    except VkIdError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    ip_hint = request.headers.get("x-user-ip") or request.cookies.get("user_ip")
+    user = _link_user(db, identity, ip_hint)
+    return _serialize_public_user(user)
 
 
 async def _handle_oauth_callback(request: Request, provider: str, db: Session) -> RedirectResponse:

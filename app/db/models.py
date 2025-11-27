@@ -98,7 +98,6 @@ class Job(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=default_uuid)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete='CASCADE'))
-    model_id = Column(UUID(as_uuid=True), ForeignKey("models.id", ondelete='SET NULL'), nullable=True)
     request_id = Column(UUID(as_uuid=True), nullable=False, default=default_uuid)
 
     # Источники и идентификаторы

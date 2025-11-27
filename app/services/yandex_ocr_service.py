@@ -55,8 +55,27 @@ class YandexOCRService:
             self._wait_operation(client, headers, operation_id, poll_timeout, poll_interval)
             recognition = self._get_recognition(client, headers, operation_id)
 
-        text_annotation = recognition.get("textAnnotation") or {}
-        full_text = text_annotation.get("fullText") or ""
+        text_annotation = (
+            recognition.get("textAnnotation")
+            or recognition.get("result", {}).get("textAnnotation")
+            or {}
+        )
+        full_text = (
+            text_annotation.get("fullText")
+            or recognition.get("fullText")
+            or recognition.get("result", {}).get("fullText")
+            or ""
+        )
+        if not full_text:
+            raw = recognition.get("raw") or {}
+            full_text = (
+                raw.get("result", {})
+                .get("textAnnotation", {})
+                .get("fullText")
+                or ""
+            )
+        logger.info("yandex_ocr.recognize: full_text_len=%s", len(full_text or ""))
+        
         return full_text, {
             "operationId": operation_id,
             "textAnnotation": text_annotation,

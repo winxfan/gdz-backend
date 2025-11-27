@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import uuid
@@ -25,14 +26,14 @@ def process_job_pipeline(job_id: str, temp_path: str, content_type: str | None =
     try:
         job_uuid = uuid.UUID(job_id)
     except Exception:
-        logger.error("job_pipeline.invalid_job_id", job_id=job_id)
+        logger.error("job_pipeline.invalid_job_id job_id=%s", job_id)
         return
     try:
         job = db.query(Job).filter(Job.id == job_uuid).first()
         if not job:
-            logger.warning("job_pipeline.job_missing", job_id=job_id)
+            logger.warning("job_pipeline.job_missing job_id=%s", job_id)
             return
-        logger.info("job_pipeline.start", job_id=job_id)
+        logger.info("job_pipeline.start job_id=%s", job_id)
         job.status = "processing"
         db.commit()
 
@@ -48,6 +49,19 @@ def process_job_pipeline(job_id: str, temp_path: str, content_type: str | None =
         meta["ocr"] = ocr_meta
         job.pipeline_meta = meta
         db.commit()
+        logger.info(
+            "job_pipeline.ocr_result job_id=%s detected_text_len=%s meta=%s",
+            job_id,
+            len(detected_text or ""),
+            json.dumps(ocr_meta, ensure_ascii=False),
+        )
+
+        if not (detected_text or "").strip():
+            job.status = "failed"
+            job.error_message = "OCR returned empty text"
+            db.commit()
+            logger.warning("job_pipeline.empty_ocr_result job_id=%s", job_id)
+            return
 
         # GPT step
         gpt_service = get_gpt_service()
@@ -62,9 +76,15 @@ def process_job_pipeline(job_id: str, temp_path: str, content_type: str | None =
         job.tokens_consumed = job.tokens_reserved
         job.is_ok = True
         db.commit()
-        logger.info("job_pipeline.done", job_id=job_id)
+        logger.info(
+            "job_pipeline.gpt_result job_id=%s generated_text_len=%s meta=%s",
+            job_id,
+            len(generated_text or ""),
+            json.dumps(gpt_meta, ensure_ascii=False),
+        )
+        logger.info("job_pipeline.done job_id=%s", job_id)
     except Exception as exc:
-        logger.exception("job_pipeline.failed", job_id=job_id)
+        logger.exception("job_pipeline.failed job_id=%s", job_id)
         failed_job = db.query(Job).filter(Job.id == job_uuid).first()
         if failed_job:
             failed_job.status = "failed"
@@ -76,6 +96,5 @@ def process_job_pipeline(job_id: str, temp_path: str, content_type: str | None =
             if os.path.exists(temp_path):
                 os.remove(temp_path)
         except Exception:
-            logger.warning("job_pipeline.cleanup_failed", temp_path=temp_path)
-
+            logger.warning("job_pipeline.cleanup_failed temp_path=%s", temp_path)
 

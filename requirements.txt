@@ -26,3 +26,6 @@ itsdangerous==2.2.0
 
 # Yandex GPT (OpenAI совместимый клиент)
 openai==1.51.2
+
+# VK ID (декодирование JWT)
+PyJWT==2.9.0
