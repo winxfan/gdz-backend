@@ -182,7 +182,7 @@ async def _handle_oauth_callback(request: Request, provider: str, db: Session) -
         token = await client.authorize_access_token(request)
     except OAuthError as exc:
         logger.warning("oauth_authorize_access_token_failed", provider=provider, error=str(exc))
-        frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
+        frontend_base = settings.frontend_return_url_base or "https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai"
         return RedirectResponse(url=f"{frontend_base}/profile?auth_error={exc.error}&provider={provider}")
 
     userinfo: dict[str, Any] | None = None
@@ -194,7 +194,7 @@ async def _handle_oauth_callback(request: Request, provider: str, db: Session) -
             userinfo = resp.json() if resp else None
         except OAuthError as exc:
             logger.warning("oauth_userinfo_failed", provider=provider, error=str(exc))
-            frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
+            frontend_base = settings.frontend_return_url_base or "https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai"
             return RedirectResponse(url=f"{frontend_base}/profile?auth_error=userinfo_failed&provider={provider}")
     elif provider == "vk":
         userinfo = {
@@ -210,10 +210,10 @@ async def _handle_oauth_callback(request: Request, provider: str, db: Session) -
         logger.info("oauth_user_linked", provider=provider, user_id=str(user.id))
     except Exception as exc:
         logger.exception("oauth_user_link_failed", provider=provider)
-        frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
+        frontend_base = settings.frontend_return_url_base or "https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai"
         return RedirectResponse(url=f"{frontend_base}/profile?auth_error=link_failed&provider={provider}")
 
-    frontend_base = settings.frontend_return_url_base or "https://xn--b1ahgb0aea5aq.online"
+    frontend_base = settings.frontend_return_url_base or "https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai"
     redirect_url = f"{frontend_base}/profile?userId={user.id}"
     return RedirectResponse(url=redirect_url)
 

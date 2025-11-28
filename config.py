@@ -34,8 +34,8 @@ SMTP_CONFIG = {
 
 # Настройки приложения
 APP_CONFIG = {
-    'frontend_url': os.getenv('FRONTEND_URL', 'https://xn--b1ahgb0aea5aq.online'),
-    'api_url': os.getenv('API_URL', 'http://localhost:8002'),
+    'frontend_url': os.getenv('FRONTEND_URL', 'https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai'),
+    'api_url': os.getenv('API_URL', 'https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai'),
 }
 
 # Публичные URL-ы приложения (из .env)
@@ -111,7 +111,7 @@ ENCRYPTION_CONFIG = {
 
 # Настройки Triton Inference Server
 TRITON_CONFIG = {
-    'url': os.getenv('TRITON_URL', 'http://localhost:8002'),
+    'url': os.getenv('TRITON_URL', 'https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai'),
     'model_name': os.getenv('TRITON_MODEL_NAME', 'yolov8'),
     'model_version': os.getenv('TRITON_MODEL_VERSION', '1'),
     'timeout_seconds': int(os.getenv('TRITON_TIMEOUT_SECONDS', '30')),
@@ -125,7 +125,7 @@ TRITON_CONFIG = {
 
 # Настройки Triton для CLIP (эмбеддинги)
 TRITON_CLIP_CONFIG = {
-    'url': os.getenv('TRITON_URL', 'http://localhost:8002'),
+    'url': os.getenv('TRITON_URL', 'https://xn--80aqu.xn-----glcep7bbaf7au.xn--p1ai'),
     'model_name': os.getenv('TRITON_CLIP_MODEL_NAME', 'clip-vit-b32'),
     'model_version': os.getenv('TRITON_CLIP_MODEL_VERSION', '1'),
     'timeout_seconds': int(os.getenv('TRITON_TIMEOUT_SECONDS', '30')),
