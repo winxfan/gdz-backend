@@ -2,7 +2,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6378:6378"
     networks:
       - live_shared_net
 
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["bash","-c","rq worker default --url ${REDIS_URL:-redis://redis:6379/0}"]
+    command: ["bash","-c","rq worker default --url ${REDIS_URL:-redis://redis:6378/0}"]
     env_file:
       - ./.env
     depends_on:

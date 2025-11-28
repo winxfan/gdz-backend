@@ -84,7 +84,7 @@ RABBITMQ_CONFIG = {
 # Настройки Redis
 REDIS_CONFIG = {
     'host': os.getenv('REDIS_HOST', 'redis'),
-    'port': os.getenv('REDIS_PORT', '6379'),
+    'port': os.getenv('REDIS_PORT', '6378'),
     'db': os.getenv('REDIS_DB', '0'),
 }
 

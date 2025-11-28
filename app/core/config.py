@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # DB / Queue
     database_url: str = Field(default="postgresql://neurolib:neurolib@postgres:5432/neurolibrary", alias="DATABASE_URL")
-    redis_url: str = Field(default="redis://redis:6379/0", alias="REDIS_URL")
+    redis_url: str = Field(default="redis://redis:6378/0", alias="REDIS_URL")
 
     # S3
     s3_endpoint_url: str | None = Field(default=None, alias="S3_ENDPOINT_URL")
