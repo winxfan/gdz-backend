@@ -42,6 +42,7 @@ class YandexOCRService:
             "content": base64.b64encode(content).decode(),
             "mimeType": mime_type or "image/jpeg",
             "languageCodes": language_codes or ["ru"],
+            "model": "math-markdown",
         }
         headers = self._headers()
         logger.info("yandex_ocr.recognize: sending request mime=%s size=%s", payload["mimeType"], len(content))
