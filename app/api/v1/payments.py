@@ -4,35 +4,66 @@ import uuid
 from decimal import Decimal
 import logging
 from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.db.models import Transaction, User
 from app.services.yookassa_service import create_payment as create_yookassa_payment
 from app.core.config import settings
+from app.services.tariff_catalog import get_tariff
 
 router = APIRouter(prefix="/payments", tags=["Payments"]) 
 
 logger = logging.getLogger(__name__)
 
-@router.post("/intents")
-def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")) -> dict:
-    user_id = payload.get("userId")
-    amount_rub = payload.get("amountRub")
-    provider = payload.get("provider") or "yookassa"
-    plan = payload.get("plan")
-    description = payload.get("description")
-    logger.info(
-        "Create payment intent: userId=%s amountRub=%s provider=%s plan=%s idempotency=%s",
-        user_id, amount_rub, provider, plan, idempotency_key
-    )
-    if not user_id or amount_rub is None:
-        logger.warning("Missing required fields for payment intent: payload=%s", {k: payload.get(k) for k in ["userId", "amountRub", "provider", "plan"]})
-        raise HTTPException(status_code=400, detail="userId and amountRub are required")
+class CreatePaymentIntentRequest(BaseModel):
+    user_id: uuid.UUID = Field(alias="userId")
+    tariff_id: str = Field(alias="tariffId")
+    provider: str | None = Field(default=None)
+    description: str | None = None
 
-    user = db.query(User).filter(User.id == user_id).first()
+    class Config:
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+
+
+class PaymentIntentResponse(BaseModel):
+    id: str
+    provider: str
+    amountRub: float
+    currency: str
+    paymentUrl: str | None = None
+    reference: str
+    paymentId: str | None = None
+    tariff_id: str = Field(alias="tariffId")
+    tokens: float
+
+    class Config:
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+
+
+@router.post("/intents", response_model=PaymentIntentResponse)
+def create_payment_intent(payload: CreatePaymentIntentRequest, db: Session = Depends(get_db), idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")) -> PaymentIntentResponse:
+    provider = payload.provider or "yookassa"
+    tariff = get_tariff(payload.tariff_id)
+    if not tariff:
+        logger.warning("Tariff not found for payment intent: tariff_id=%s", payload.tariff_id)
+        raise HTTPException(status_code=404, detail="Tariff not found")
+
+    amount_rub_dec = Decimal(str(tariff["price_rub"]))
+    tokens_dec = Decimal(str(tariff["tokens"]))
+    plan = tariff["title"]
+    description = (payload.description or plan).strip()
+    logger.info(
+        "Create payment intent: userId=%s tariff_id=%s amountRub=%s tokens=%s provider=%s idempotency=%s",
+        payload.user_id, payload.tariff_id, amount_rub_dec, tokens_dec, provider, idempotency_key
+    )
+
+    user = db.query(User).filter(User.id == payload.user_id).first()
     if not user:
-        logger.warning("User not found for payment intent: userId=%s", user_id)
+        logger.warning("User not found for payment intent: userId=%s", payload.user_id)
         raise HTTPException(status_code=404, detail="User not found")
 
     reference = idempotency_key or uuid.uuid4().hex
@@ -41,31 +72,19 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
         type="gateway_payment",
         provider=provider,
         status="pending",
-        amount_rub=Decimal(str(amount_rub)),
+        amount_rub=amount_rub_dec,
         currency="RUB",
         plan=plan,
         reference=reference,
-        meta={"intent": True},
+        meta={"intent": True, "tariffId": payload.tariff_id, "tokens": float(tokens_dec)},
     )
     db.add(txn)
     db.commit()
     db.refresh(txn)
     logger.info(
-        "Payment intent transaction created: txn_id=%s reference=%s user_id=%s amount_rub=%s provider=%s",
-        txn.id, reference, user.id, amount_rub, provider
+        "Payment intent transaction created: txn_id=%s reference=%s user_id=%s amount_rub=%s tokens=%s provider=%s",
+        txn.id, reference, user.id, amount_rub_dec, tokens_dec, provider
     )
-
-    # Рассчёт бонусов для пополнения баланса
-    credit_rub_dec = Decimal(str(amount_rub))
-    if provider == "yookassa":
-        # Точные акции по суммам
-        if Decimal("100") == credit_rub_dec:
-            credit_rub_dec = Decimal("100")
-        elif Decimal("500") == credit_rub_dec:
-            credit_rub_dec = Decimal("575")
-        elif Decimal("1000") == credit_rub_dec:
-            credit_rub_dec = Decimal("1250")
-        # иначе без бонуса — оставляем исходную сумму
 
     # Реальная генерация ссылки YooKassa
     payment_url = None
@@ -77,11 +96,11 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
         try:
             logger.info(
                 "Calling YooKassa create_payment: order_id=%s amount_rub=%s return_url=%s has_email=%s",
-                txn.id, amount_rub, return_url, bool(user.email)
+                txn.id, amount_rub_dec, return_url, bool(user.email)
             )
             yk = create_yookassa_payment(
                 order_id=str(txn.id),
-                amount_rub=float(amount_rub),
+                amount_rub=float(amount_rub_dec),
                 description=desc,
                 return_url=return_url,
                 email=user.email,
@@ -89,8 +108,11 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
                 user_id=str(user.id),
                 extra_metadata={
                     "topup": True,
-                    "credit_rub": float(credit_rub_dec),
-                    "original_amount_rub": float(amount_rub),
+                    "tariff_id": tariff["id"],
+                    "tariff_title": plan,
+                    "tokens": float(tokens_dec),
+                    "credit_rub": float(tokens_dec),
+                    "original_amount_rub": float(amount_rub_dec),
                 },
             )
             if "error" in yk:
@@ -103,9 +125,10 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
             meta.update({
                 "yookassa": {"paymentId": payment_id, "paymentUrl": payment_url, "raw": yk.get("raw")},
                 "topup": True,
-                "creditRub": float(credit_rub_dec),
-                "originalAmountRub": float(amount_rub),
-                "bonusRub": float(credit_rub_dec - Decimal(str(amount_rub))),
+                "tariffId": tariff["id"],
+                "tariffTitle": plan,
+                "tokens": float(tokens_dec),
+                "priceRub": float(amount_rub_dec),
             })
             txn.meta = meta
             db.commit()
@@ -122,7 +145,7 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
                         user_id=str(user.id),
                         payment_url=payment_url,
                         payment_id=payment_id,
-                        amount_rub=float(amount_rub),
+                        amount_rub=float(amount_rub_dec),
                         order_id=str(txn.id),
                         provider="yookassa",
                     )
@@ -143,15 +166,17 @@ def create_payment_intent(payload: dict, db: Session = Depends(get_db), idempote
     resp = {
         "id": str(txn.id),
         "provider": provider,
-        "amountRub": float(txn.amount_rub or 0),
+        "amountRub": float(amount_rub_dec),
         "currency": txn.currency,
         "paymentUrl": payment_url,
         "reference": reference,
         "paymentId": payment_id,
+        "tariffId": tariff["id"],
+        "tokens": float(tokens_dec),
     }
     logger.info(
-        "Payment intent response: txn_id=%s provider=%s amountRub=%s paymentId=%s has_url=%s",
-        txn.id, provider, resp["amountRub"], payment_id, bool(payment_url)
+        "Payment intent response: txn_id=%s provider=%s amountRub=%s tokens=%s paymentId=%s has_url=%s",
+        txn.id, provider, resp["amountRub"], resp["tokens"], payment_id, bool(payment_url)
     )
     return resp
 
