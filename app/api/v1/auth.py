@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 import uuid
 from decimal import Decimal
+from secrets import token_urlsafe
 
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import RedirectResponse
@@ -18,9 +19,44 @@ from app.db.models import User, Job, Transaction
 from app.services.user_profile import avatar_id_for_ip, username_for_ip
 from app.services.vk_id import get_vk_id_service, VkIdError
 
-router = APIRouter(prefix="/auth", tags=["auth"]) 
+router = APIRouter(prefix="/auth", tags=["auth"])
 router_public = APIRouter(tags=["auth"])  # публичные колбэки без /api/v1
 logger = structlog.get_logger(__name__)
+
+_MARKETING_SESSION_KEY = "oauth_marketing_consent_states"
+
+
+def _parse_bool_flag(raw_value: str | None) -> bool | None:
+    if raw_value is None:
+        return None
+    normalized = raw_value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    return None
+
+
+def _remember_marketing_consent(request: Request, state: str, consent: bool) -> None:
+    store = request.session.get(_MARKETING_SESSION_KEY)
+    if not isinstance(store, dict):
+        store = {}
+    store[state] = consent
+    request.session[_MARKETING_SESSION_KEY] = store
+
+
+def _consume_marketing_consent(request: Request, state: str | None) -> bool | None:
+    if not state:
+        return None
+    store = request.session.get(_MARKETING_SESSION_KEY)
+    if not isinstance(store, dict):
+        return None
+    consent = store.pop(state, None)
+    if store:
+        request.session[_MARKETING_SESSION_KEY] = store
+    else:
+        request.session.pop(_MARKETING_SESSION_KEY, None)
+    return consent
 
 
 def _validate_provider(provider: str) -> None:
@@ -74,6 +110,7 @@ def _link_user(
     db: Session,
     identity: dict[str, Any],
     ip_hint: str | None,
+    marketing_consent: bool | None = None,
 ) -> User:
     social_id = identity.get("social_id")
     email = identity.get("email")
@@ -105,6 +142,7 @@ def _link_user(
             anon_user_id=str(uuid.uuid4()),
             balance_tokens=Decimal("5"),
             tokens_used_as_anon=0,
+            is_accepted_promo=bool(marketing_consent) if marketing_consent is not None else False,
         )
         db.add(target)
 
@@ -117,6 +155,8 @@ def _link_user(
     target.is_authorized = True
     if ip_hint:
         target.ip = ip_hint
+    if marketing_consent is not None:
+        target.is_accepted_promo = marketing_consent
 
     db.commit()
     db.refresh(target)
@@ -142,6 +182,7 @@ class VkIdExchangePayload(BaseModel):
     device_id: str = Field(..., alias="deviceId")
     code_verifier: str = Field(..., alias="codeVerifier")
     state: str | None = None
+    marketing_consent: bool | None = Field(default=None, alias="marketingConsent")
 
 
 @router.post("/oauth/vk-id/exchange")
@@ -162,7 +203,7 @@ def vk_id_exchange(
         raise HTTPException(status_code=400, detail=str(exc))
 
     ip_hint = request.headers.get("x-user-ip") or request.cookies.get("user_ip")
-    user = _link_user(db, identity, ip_hint)
+    user = _link_user(db, identity, ip_hint, payload.marketing_consent)
     return _serialize_public_user(user)
 
 
@@ -170,6 +211,7 @@ async def _handle_oauth_callback(request: Request, provider: str, db: Session) -
     oauth = oauth_service.get_oauth()
     _validate_provider(provider)
     client = getattr(oauth, provider)
+    marketing_consent = _consume_marketing_consent(request, request.query_params.get("state"))
 
     # Совпадающий redirect_uri на этапе обмена кода (важно для Яндекс)
     if provider == "yandex":
@@ -206,7 +248,7 @@ async def _handle_oauth_callback(request: Request, provider: str, db: Session) -
     identity = _extract_identity(provider, token, userinfo)
     ip_hint = request.headers.get("x-user-ip") or request.cookies.get("user_ip")
     try:
-        user = _link_user(db, identity, ip_hint)
+        user = _link_user(db, identity, ip_hint, marketing_consent)
         logger.info("oauth_user_linked", provider=provider, user_id=str(user.id))
     except Exception as exc:
         logger.exception("oauth_user_link_failed", provider=provider)
@@ -229,6 +271,13 @@ async def oauth_login(request: Request, provider: str):
     else:
         callback_url = request.url_for("oauth_callback", provider=provider)
     client = getattr(oauth, provider)
+    marketing_consent = _parse_bool_flag(request.query_params.get("marketing_consent"))
+    state_override = None
+    if marketing_consent is not None:
+        state_override = token_urlsafe(32)
+        _remember_marketing_consent(request, state_override, marketing_consent)
+    if state_override:
+        return await client.authorize_redirect(request, str(callback_url), state=state_override)
     return await client.authorize_redirect(request, str(callback_url))
 
 
