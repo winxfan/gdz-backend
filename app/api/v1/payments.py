@@ -4,7 +4,11 @@ import uuid
 from decimal import Decimal
 import logging
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+try:
+    from pydantic import BaseModel, Field, ConfigDict
+except ImportError:  # pragma: no cover - pydantic v1 fallback
+    from pydantic import BaseModel, Field  # type: ignore
+    ConfigDict = None  # type: ignore
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -17,18 +21,23 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
 
 logger = logging.getLogger(__name__)
 
-class CreatePaymentIntentRequest(BaseModel):
+if ConfigDict:
+    class _PopulateByNameModel(BaseModel):
+        model_config = ConfigDict(populate_by_name=True, ser_json_timedelta="iso8601")
+else:  # pragma: no cover
+    class _PopulateByNameModel(BaseModel):
+        class Config:
+            allow_population_by_field_name = True
+
+
+class CreatePaymentIntentRequest(_PopulateByNameModel):
     user_id: uuid.UUID = Field(alias="userId")
     tariff_id: str = Field(alias="tariffId")
     provider: str | None = Field(default=None)
     description: str | None = None
 
-    class Config:
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
 
-
-class PaymentIntentResponse(BaseModel):
+class PaymentIntentResponse(_PopulateByNameModel):
     id: str
     provider: str
     amountRub: float
@@ -38,10 +47,6 @@ class PaymentIntentResponse(BaseModel):
     paymentId: str | None = None
     tariff_id: str = Field(alias="tariffId")
     tokens: float
-
-    class Config:
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
 
 
 @router.post("/intents", response_model=PaymentIntentResponse)
